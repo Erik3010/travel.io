@@ -193,7 +193,7 @@
   </svg>
 </template>
 
-<style>
+<style scoped>
 path:hover {
   fill: red;
 }
