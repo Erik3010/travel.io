@@ -5,7 +5,7 @@
     stroke="#ecf0f1"
     stroke-width="1"
     xmlns="http://www.w3.org/2000/svg"
-    :viewBox="`0 0 ${mapStore.viewBox.width} ${mapStore.viewBox.height}`"
+    :viewBox="`0 0 ${actualWidth} ${actualHeight}`"
   >
     <g
       id="map-group"
@@ -4018,8 +4018,16 @@ import { useMap } from "@/store/map";
 const svg = ref<(HTMLElement & SVGSVGElement) | null>(null);
 const mapStore = useMap();
 
+const actualWidth = ref(0);
+const actualHeight = ref(0);
+
 onMounted(() => {
-  const rect = svg.value!.getBoundingClientRect();
+  const rect = document.querySelector("#map")?.getBoundingClientRect();
+
+  actualWidth.value = rect!.width;
+  actualHeight.value = rect!.height;
+
+  console.log(actualWidth.value, actualHeight.value);
 
   const { width, height } = svg.value!.getBBox();
 

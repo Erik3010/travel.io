@@ -76,7 +76,6 @@ onMounted(() => {
 
     // mapStore.zoomScale = zoom;
 
-    console.log(offsetX, mapStore.viewBox.x, offsetX - mapStore.viewBox.x);
     mapStore.viewBox.x = offsetX - (offsetX - mapStore.viewBox.x) * scaleStep;
     mapStore.viewBox.y = offsetY - (offsetY - mapStore.viewBox.y) * scaleStep;
 
