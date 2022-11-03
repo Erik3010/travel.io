@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 
 interface State {
-  svg: (HTMLElement & SVGElement) | null;
+  svg: (HTMLElement & SVGSVGElement) | null;
   zoomScale: number;
   viewBox: ViewBox;
 }
