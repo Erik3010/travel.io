@@ -28,6 +28,19 @@ const coordinate = ref<Coordinate>({ x: 0, y: 0 });
 
 const mapStore = useMap();
 
+const setScale = (position: Coordinate, scale: number, isZoomIn: boolean) => {
+  mapStore.position.x = position.x - (position.x - mapStore.position.x) * scale;
+  mapStore.position.y = position.y - (position.y - mapStore.position.y) * scale;
+
+  mapStore.zoomScale *= scale;
+
+  mapStore.strokeWidth += isZoomIn ? -0.025 * scale : 0.025 * scale;
+
+  // mapStore.strokeWidth *= isZoomIn
+  //   ? 1 / (ZOOM_FACTOR * scale)
+  //   : ZOOM_FACTOR * scale;
+};
+
 const onMouseDownHandler = (event: MouseEvent) => {
   const { offsetY, offsetX } = event;
 
@@ -59,10 +72,33 @@ const onWheelHandler = (event: WheelEvent) => {
   const isZoomIn = deltaY < 0;
   const scaleStep = isZoomIn ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
 
-  mapStore.position.x = offsetX - (offsetX - mapStore.position.x) * scaleStep;
-  mapStore.position.y = offsetY - (offsetY - mapStore.position.y) * scaleStep;
+  setScale({ x: offsetX, y: offsetY }, scaleStep, isZoomIn);
+  // mapStore.position.x = offsetX - (offsetX - mapStore.position.x) * scaleStep;
+  // mapStore.position.y = offsetY - (offsetY - mapStore.position.y) * scaleStep;
 
-  mapStore.zoomScale *= scaleStep;
+  // mapStore.zoomScale *= scaleStep;
+
+  // mapStore.strokeWidth *= isZoomIn ? 1 / ZOOM_FACTOR : ZOOM_FACTOR;
+};
+
+const provinceClickHandler = (element: HTMLElement, event: MouseEvent) => {
+  const svg = mapStore.svg!;
+  const { x, y } = svg.getBoundingClientRect();
+  const rect = element.getBoundingClientRect();
+
+  (svg.querySelector("#map-group")! as HTMLElement).style.transition =
+    ".3s cubic-bezier(0.25, 1, 0.5, 1)";
+
+  svg.addEventListener("transitionend", () => {
+    (svg.querySelector("#map-group")! as HTMLElement).style.transition = "";
+  });
+
+  setScale(
+    { x: rect.x - x + rect.width / 2, y: rect.y - y + rect.height / 2 },
+    4 * ZOOM_FACTOR,
+    true
+  );
+  // setScale({ x: event.offsetX, y: event.offsetY }, 6, true);
 };
 
 onMounted(() => {
@@ -82,6 +118,17 @@ onMounted(() => {
   svg.addEventListener("wheel", onWheelHandler);
 
   window.addEventListener("mouseup", onMouseUpHandler);
+
+  const provinces = [
+    ...svg.querySelectorAll("path[iso_a2=ID]"),
+  ] as HTMLElement[];
+
+  for (const province of provinces) {
+    (province as HTMLElement).addEventListener(
+      "click",
+      provinceClickHandler.bind(null, province)
+    );
+  }
 });
 
 onUnmounted(() => {

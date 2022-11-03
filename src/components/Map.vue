@@ -3,7 +3,7 @@
     ref="svg"
     fill="#3498db"
     stroke="#ecf0f1"
-    stroke-width="1"
+    :stroke-width="mapStore.strokeWidth"
     xmlns="http://www.w3.org/2000/svg"
     :viewBox="`${mapStore.viewBox.x} ${mapStore.viewBox.y} ${mapStore.viewBox.width} ${mapStore.viewBox.height}`"
   >

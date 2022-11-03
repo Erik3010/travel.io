@@ -6,6 +6,7 @@ interface State {
   zoomScale: number;
   viewBox: ViewBox;
   position: Coordinate;
+  strokeWidth: number;
 }
 
 interface ViewBox {
@@ -21,5 +22,6 @@ export const useMap = defineStore("map", {
     zoomScale: 1,
     viewBox: { x: 0, y: 0, width: 0, height: 0 },
     position: { x: 0, y: 0 },
+    strokeWidth: 1,
   }),
 });
