@@ -5,11 +5,11 @@
     stroke="#ecf0f1"
     stroke-width="1"
     xmlns="http://www.w3.org/2000/svg"
-    :viewBox="`0 0 ${actualWidth} ${actualHeight}`"
+    :viewBox="`${mapStore.viewBox.x} ${mapStore.viewBox.y} ${mapStore.viewBox.width} ${mapStore.viewBox.height}`"
   >
     <g
       id="map-group"
-      :transform="`translate(${mapStore.viewBox.x} ${mapStore.viewBox.y}) scale(${mapStore.zoomScale})`"
+      :transform="`translate(${mapStore.position.x} ${mapStore.position.y}) scale(${mapStore.zoomScale})`"
     >
       <path
         d="M394.9255467210375,30.316665063317597 394.92554672181774,30.316665063347692 395.5253703646917,30.423663661709032 396.31729227282057,30.423663661709032 397.5179480841778,30.423663661709032 398.46617934120934,30.433351666593907 398.5546113067346,30.637180223409647 398.660840419858,31.41512871131408 398.94978358110205,32.111224589437676 398.3676480704205,32.513209232928105 398.11836377853905,32.59572042676718 397.8662467003319,32.60206742272037 397.2741964810097,32.45255966363099 396.93567972435795,31.95889050128594 395.95412276851744,31.403138904578622 395.54903578550966,30.855828445336783 394.9255467210375,30.316665063317597Z"
@@ -4018,22 +4018,7 @@ import { useMap } from "@/store/map";
 const svg = ref<(HTMLElement & SVGSVGElement) | null>(null);
 const mapStore = useMap();
 
-const actualWidth = ref(0);
-const actualHeight = ref(0);
-
 onMounted(() => {
-  const rect = document.querySelector("#map")?.getBoundingClientRect();
-
-  actualWidth.value = rect!.width;
-  actualHeight.value = rect!.height;
-
-  console.log(actualWidth.value, actualHeight.value);
-
-  const { width, height } = svg.value!.getBBox();
-
-  mapStore.$patch((state) => {
-    state.svg = svg.value;
-    state.viewBox = { width, height, x: 0, y: 0 };
-  });
+  mapStore.svg = svg.value;
 });
 </script>

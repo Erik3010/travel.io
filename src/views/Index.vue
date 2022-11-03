@@ -4,8 +4,9 @@
     <div
       id="map"
       class="overflow-hidden bg-blue-100 w-full h-full cursor-grab flex items-center"
+      ref="mapWrapper"
     >
-      <Map ref="map" />
+      <Map />
     </div>
   </div>
 </template>
@@ -13,79 +14,83 @@
 <script setup lang="ts">
 import Map from "@/components/Map.vue";
 import Sidebar from "@/components/Sidebar/Index.vue";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { Coordinate } from "@/types/Coordinate";
 import { useMap } from "@/store/map";
-
+import { ZOOM_FACTOR } from "@/constants";
 import { roundNumber } from "@/utils";
-
 import { storeToRefs } from "pinia";
+
+const mapWrapper = ref<HTMLElement | null>(null);
 
 const isMousedown = ref(false);
 const coordinate = ref<Coordinate>({ x: 0, y: 0 });
 
-const map = ref<InstanceType<typeof Map> | null>(null);
-
 const mapStore = useMap();
 
+const onMouseDownHandler = (event: MouseEvent) => {
+  const { offsetY, offsetX } = event;
+
+  isMousedown.value = true;
+
+  coordinate.value = { x: offsetX, y: offsetY };
+};
+
+const onMouseMoveHandler = (event: MouseEvent) => {
+  if (!isMousedown.value) return;
+
+  const { offsetY, offsetX } = event;
+
+  mapStore.position.x += offsetX - coordinate.value.x;
+  mapStore.position.y += offsetY - coordinate.value.y;
+
+  coordinate.value = { x: offsetX, y: offsetY };
+};
+
+const onMouseUpHandler = (event: MouseEvent) => {
+  isMousedown.value = false;
+};
+
+const onWheelHandler = (event: WheelEvent) => {
+  event.preventDefault();
+
+  const { deltaY, offsetY, offsetX } = event;
+
+  const isZoomIn = deltaY < 0;
+  const scaleStep = isZoomIn ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+
+  mapStore.position.x = offsetX - (offsetX - mapStore.position.x) * scaleStep;
+  mapStore.position.y = offsetY - (offsetY - mapStore.position.y) * scaleStep;
+
+  mapStore.zoomScale *= scaleStep;
+};
+
 onMounted(() => {
-  // const svg = map.value?.svg!;
+  const { width, height } = mapWrapper.value!.getBoundingClientRect();
+  mapStore.viewBox.width = width;
+  mapStore.viewBox.height = height;
+
+  const svg = mapStore.svg!;
+  const map = svg.querySelector("#map-group") as SVGGraphicsElement;
+  const mapRect = map.getBBox();
+
+  mapStore.position.x = (mapStore.viewBox.width - mapRect.width) / 2;
+  mapStore.position.y = (mapStore.viewBox.height - mapRect.height) / 2;
+
+  svg.addEventListener("mousedown", onMouseDownHandler);
+  svg.addEventListener("mousemove", onMouseMoveHandler);
+  svg.addEventListener("wheel", onWheelHandler);
+
+  window.addEventListener("mouseup", onMouseUpHandler);
+});
+
+onUnmounted(() => {
   const svg = mapStore.svg!;
 
-  svg.addEventListener("mousedown", (event) => {
-    const { offsetY, offsetX } = event;
+  svg.removeEventListener("mousedown", onMouseDownHandler);
+  svg.removeEventListener("mousemove", onMouseMoveHandler);
+  svg.removeEventListener("wheel", onWheelHandler);
 
-    isMousedown.value = true;
-
-    coordinate.value = { x: offsetX, y: offsetY };
-  });
-
-  svg.addEventListener("mousemove", (event) => {
-    if (!isMousedown.value) return;
-
-    const { offsetY, offsetX } = event;
-
-    // mapStore.viewBox.x += coordinate.value.x - offsetX;
-    // mapStore.viewBox.y += coordinate.value.y - offsetY;
-    mapStore.viewBox.x += offsetX - coordinate.value.x;
-    mapStore.viewBox.y += offsetY - coordinate.value.y;
-
-    coordinate.value = { x: offsetX, y: offsetY };
-  });
-
-  svg.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    const { deltaY, offsetY, offsetX, clientY, clientX } = event;
-
-    // const delta = ((deltaY > 0 ? 1 : -1) * Math.log(Math.abs(deltaY) + 10)) / 3;
-    // const zoom = Math.pow(1.1, -1 * delta);
-
-    // const scaleStep = 0.25;
-    const scaleAmount = 1.1;
-    const scaleStep = deltaY < 0 ? scaleAmount : 1 / scaleAmount;
-
-    // const zoom = mapStore.zoomScale + (deltaY < 0 ? scaleStep : -scaleStep);
-
-    // const zoom = roundNumber(mapStore.zoomScale + (deltaY * -1) / 1000, 2);
-
-    // mapStore.viewBox.x =
-    //   (zoom / mapStore.zoomScale) * (mapStore.viewBox.x - offsetX) + offsetX;
-
-    // mapStore.viewBox.y =
-    //   (zoom / mapStore.zoomScale) * (mapStore.viewBox.y - offsetY) + offsetY;
-
-    // mapStore.zoomScale = zoom;
-
-    mapStore.viewBox.x = offsetX - (offsetX - mapStore.viewBox.x) * scaleStep;
-    mapStore.viewBox.y = offsetY - (offsetY - mapStore.viewBox.y) * scaleStep;
-
-    mapStore.zoomScale *= scaleStep;
-
-    // mapStore.zoomScale += Math.round(((deltaY * -1) / 1000) * 100) / 100;
-  });
-
-  window.addEventListener("mouseup", () => {
-    isMousedown.value = false;
-  });
+  window.removeEventListener("mouseup", onMouseUpHandler);
 });
 </script>
