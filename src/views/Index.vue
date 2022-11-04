@@ -27,21 +27,10 @@ const isMousedown = ref(false);
 const coordinate = ref<Coordinate>({ x: 0, y: 0 });
 
 const mapStore = useMap();
-
-const setScale = (position: Coordinate, scale: number, isZoomIn: boolean) => {
-  mapStore.position.x = position.x - (position.x - mapStore.position.x) * scale;
-  mapStore.position.y = position.y - (position.y - mapStore.position.y) * scale;
-
-  mapStore.zoomScale *= scale;
-
-  mapStore.strokeWidth += isZoomIn ? -0.025 * scale : 0.025 * scale;
-
-  // mapStore.strokeWidth *= isZoomIn
-  //   ? 1 / (ZOOM_FACTOR * scale)
-  //   : ZOOM_FACTOR * scale;
-};
+const { setSVGIntialSize, centerizedMap, movePosition, zoom } = mapStore;
 
 const onMouseDownHandler = (event: MouseEvent) => {
+  event.preventDefault();
   const { offsetY, offsetX } = event;
 
   isMousedown.value = true;
@@ -53,9 +42,10 @@ const onMouseMoveHandler = (event: MouseEvent) => {
   if (!isMousedown.value) return;
 
   const { offsetY, offsetX } = event;
-
-  mapStore.position.x += offsetX - coordinate.value.x;
-  mapStore.position.y += offsetY - coordinate.value.y;
+  movePosition({
+    x: offsetX - coordinate.value.x,
+    y: offsetY - coordinate.value.y,
+  });
 
   coordinate.value = { x: offsetX, y: offsetY };
 };
@@ -68,50 +58,48 @@ const onWheelHandler = (event: WheelEvent) => {
   event.preventDefault();
 
   const { deltaY, offsetY, offsetX } = event;
-
   const isZoomIn = deltaY < 0;
   const scaleStep = isZoomIn ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
 
-  setScale({ x: offsetX, y: offsetY }, scaleStep, isZoomIn);
-  // mapStore.position.x = offsetX - (offsetX - mapStore.position.x) * scaleStep;
-  // mapStore.position.y = offsetY - (offsetY - mapStore.position.y) * scaleStep;
-
-  // mapStore.zoomScale *= scaleStep;
-
-  // mapStore.strokeWidth *= isZoomIn ? 1 / ZOOM_FACTOR : ZOOM_FACTOR;
+  zoom({
+    isZoomIn,
+    position: { x: offsetX, y: offsetY },
+    scale: scaleStep,
+  });
 };
 
-const provinceClickHandler = (element: HTMLElement, event: MouseEvent) => {
+const provinceClickHandler = (provinceEl: HTMLElement, event: MouseEvent) => {
   const svg = mapStore.svg!;
-  const { x, y } = svg.getBoundingClientRect();
-  const rect = element.getBoundingClientRect();
+  const svgRect = svg.getBoundingClientRect();
+  const provinceSize = provinceEl.getBoundingClientRect();
 
   (svg.querySelector("#map-group")! as HTMLElement).style.transition =
     ".3s cubic-bezier(0.25, 1, 0.5, 1)";
 
-  svg.addEventListener("transitionend", () => {
-    (svg.querySelector("#map-group")! as HTMLElement).style.transition = "";
-  });
-
-  setScale(
-    { x: rect.x - x + rect.width / 2, y: rect.y - y + rect.height / 2 },
-    4 * ZOOM_FACTOR,
-    true
+  (svg.querySelector("#map-group")! as HTMLElement).addEventListener(
+    "transitionend",
+    () => {
+      (svg.querySelector("#map-group")! as HTMLElement).style.transition = "";
+    }
   );
-  // setScale({ x: event.offsetX, y: event.offsetY }, 6, true);
+
+  const position = {
+    x: provinceSize.x - svgRect.x + provinceSize.width / 2,
+    y: provinceSize.y - svgRect.y + provinceSize.height / 2,
+  };
+  zoom({
+    position,
+    scale: Math.pow(ZOOM_FACTOR, 20),
+    isZoomIn: true,
+  });
 };
 
 onMounted(() => {
-  const { width, height } = mapWrapper.value!.getBoundingClientRect();
-  mapStore.viewBox.width = width;
-  mapStore.viewBox.height = height;
-
   const svg = mapStore.svg!;
-  const map = svg.querySelector("#map-group") as SVGGraphicsElement;
-  const mapRect = map.getBBox();
 
-  mapStore.position.x = (mapStore.viewBox.width - mapRect.width) / 2;
-  mapStore.position.y = (mapStore.viewBox.height - mapRect.height) / 2;
+  const { width, height } = mapWrapper.value!.getBoundingClientRect();
+  setSVGIntialSize(width, height);
+  centerizedMap();
 
   svg.addEventListener("mousedown", onMouseDownHandler);
   svg.addEventListener("mousemove", onMouseMoveHandler);
@@ -119,12 +107,8 @@ onMounted(() => {
 
   window.addEventListener("mouseup", onMouseUpHandler);
 
-  const provinces = [
-    ...svg.querySelectorAll("path[iso_a2=ID]"),
-  ] as HTMLElement[];
-
-  for (const province of provinces) {
-    (province as HTMLElement).addEventListener(
+  for (const province of mapStore.provinceElements) {
+    province.addEventListener(
       "click",
       provinceClickHandler.bind(null, province)
     );
