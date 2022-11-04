@@ -72,6 +72,8 @@ export const useMap = defineStore("map", {
       this.position.y = y - targetY * scale;
       this.zoomScale *= scale;
 
+      this.strokeWidth = 1.5 / this.zoomScale;
+
       // const nextScale = this.zoomScale + 0.25 * (isZoomIn ? 1 : -1);
       // const nextScale = this.zoomScale + scale * (isZoomIn ? 1 : -1);
       // const scaleRatio = nextScale / this.zoomScale;
@@ -79,15 +81,6 @@ export const useMap = defineStore("map", {
       // this.position.x = x - targetX * (nextScale / this.zoomScale);
       // this.position.y = y - targetY * (nextScale / this.zoomScale);
       // this.zoomScale = nextScale;
-
-      // this.strokeWidth += isZoomIn ? -0.025 : 0.025;
-
-      // ---------
-      // this.strokeWidth += isZoomIn ? -0.025 * scale : 0.025 * scale;
-
-      // this.strokeWidth *= isZoomIn
-      //   ? 1 / (ZOOM_FACTOR * scale)
-      //   : ZOOM_FACTOR * scale;
     },
   },
 });

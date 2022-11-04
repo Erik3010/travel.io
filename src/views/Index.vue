@@ -77,6 +77,9 @@ const provinceClickHandler = (
   const svgRect = svg.getBoundingClientRect();
   const provinceSize = provinceEl.getBoundingClientRect();
 
+  // console.log(provinceSize);
+  // return;
+
   (svg.querySelector("#map-group")! as HTMLElement).style.transition =
     ".3s cubic-bezier(0.25, 1, 0.5, 1)";
 
