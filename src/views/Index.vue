@@ -65,10 +65,14 @@ const onWheelHandler = (event: WheelEvent) => {
     isZoomIn,
     position: { x: offsetX, y: offsetY },
     scale: scaleStep,
+    // scale: 0.25,
   });
 };
 
-const provinceClickHandler = (provinceEl: HTMLElement, event: MouseEvent) => {
+const provinceClickHandler = (
+  provinceEl: HTMLElement & SVGGraphicsElement,
+  event: MouseEvent
+) => {
   const svg = mapStore.svg!;
   const svgRect = svg.getBoundingClientRect();
   const provinceSize = provinceEl.getBoundingClientRect();
@@ -83,6 +87,7 @@ const provinceClickHandler = (provinceEl: HTMLElement, event: MouseEvent) => {
     }
   );
 
+  // console.log((svgRect.width - provinceEl.getBBox().width) / 2);
   const position = {
     x: provinceSize.x - svgRect.x + provinceSize.width / 2,
     y: provinceSize.y - svgRect.y + provinceSize.height / 2,
@@ -90,6 +95,7 @@ const provinceClickHandler = (provinceEl: HTMLElement, event: MouseEvent) => {
   zoom({
     position,
     scale: Math.pow(ZOOM_FACTOR, 20),
+    // scale: 4,
     isZoomIn: true,
   });
 };

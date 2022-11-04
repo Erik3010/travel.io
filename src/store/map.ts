@@ -1,6 +1,7 @@
 import { ZOOM_FACTOR } from "@/constants";
 import { Coordinate } from "@/types/Coordinate";
 import { defineStore } from "pinia";
+import { clamp } from "@/utils";
 
 interface State {
   svg: (HTMLElement & SVGSVGElement) | null;
@@ -8,6 +9,8 @@ interface State {
   viewBox: ViewBox;
   position: Coordinate;
   strokeWidth: number;
+  maxScale: number;
+  minScale: number;
 }
 
 interface ViewBox {
@@ -30,13 +33,16 @@ export const useMap = defineStore("map", {
     viewBox: { x: 0, y: 0, width: 0, height: 0 },
     position: { x: 0, y: 0 },
     strokeWidth: 1,
+    maxScale: 20,
+    minScale: 0.5,
   }),
   getters: {
     mapGroupElement: (state): SVGGraphicsElement =>
       state.svg!.querySelector("#map-group") as SVGGraphicsElement,
-    provinceElements: (state): HTMLElement[] => {
+    provinceElements: (state): (HTMLElement & SVGGraphicsElement)[] => {
       const svg = state.svg!;
-      return [...svg.querySelectorAll("path[iso_a2=ID]")] as HTMLElement[];
+      return [...svg.querySelectorAll("path[iso_a2=ID]")] as (HTMLElement &
+        SVGGraphicsElement)[];
     },
   },
   actions: {
@@ -57,11 +63,26 @@ export const useMap = defineStore("map", {
     zoom({ position, scale, isZoomIn }: ZoomParams) {
       const { x, y } = position;
 
-      this.position.x = x - (x - this.position.x) * scale;
-      this.position.y = y - (y - this.position.y) * scale;
+      const { x: targetX, y: targetY } = {
+        x: x - this.position.x,
+        y: y - this.position.y,
+      };
 
+      this.position.x = x - targetX * scale;
+      this.position.y = y - targetY * scale;
       this.zoomScale *= scale;
 
+      // const nextScale = this.zoomScale + 0.25 * (isZoomIn ? 1 : -1);
+      // const nextScale = this.zoomScale + scale * (isZoomIn ? 1 : -1);
+      // const scaleRatio = nextScale / this.zoomScale;
+
+      // this.position.x = x - targetX * (nextScale / this.zoomScale);
+      // this.position.y = y - targetY * (nextScale / this.zoomScale);
+      // this.zoomScale = nextScale;
+
+      // this.strokeWidth += isZoomIn ? -0.025 : 0.025;
+
+      // ---------
       // this.strokeWidth += isZoomIn ? -0.025 * scale : 0.025 * scale;
 
       // this.strokeWidth *= isZoomIn
