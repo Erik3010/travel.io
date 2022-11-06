@@ -3,7 +3,8 @@
     <Sidebar />
     <div
       id="map"
-      class="overflow-hidden bg-blue-100 w-full h-full cursor-grab flex items-center"
+      class="overflow-hidden w-full h-full flex items-center"
+      :style="{ cursor: mapStore.isDragging ? 'grabbing' : 'grab' }"
       ref="mapWrapper"
     >
       <Map />
@@ -18,7 +19,7 @@ import { ref, onMounted, onUnmounted } from "vue";
 import { Coordinate } from "@/types/Coordinate";
 import { useMap } from "@/store/map";
 import { ZOOM_FACTOR } from "@/constants";
-import { roundNumber } from "@/utils";
+import { roundNumber, log } from "@/utils";
 import { storeToRefs } from "pinia";
 
 const mapWrapper = ref<HTMLElement | null>(null);
@@ -41,6 +42,8 @@ const onMouseDownHandler = (event: MouseEvent) => {
 const onMouseMoveHandler = (event: MouseEvent) => {
   if (!isMousedown.value) return;
 
+  mapStore.isDragging = true;
+
   const { offsetY, offsetX } = event;
   movePosition({
     x: offsetX - coordinate.value.x,
@@ -52,6 +55,7 @@ const onMouseMoveHandler = (event: MouseEvent) => {
 
 const onMouseUpHandler = (event: MouseEvent) => {
   isMousedown.value = false;
+  mapStore.isDragging = false;
 };
 
 const onWheelHandler = (event: WheelEvent) => {
@@ -76,30 +80,87 @@ const provinceClickHandler = (
   const svg = mapStore.svg!;
   const svgRect = svg.getBoundingClientRect();
   const provinceSize = provinceEl.getBoundingClientRect();
+  const mapEl = mapStore.mapGroupElement;
 
-  // console.log(provinceSize);
+  // console.log(
+  //   svgRect.width,
+  //   svgRect.height,
+  //   provinceSize.width,
+  //   provinceSize.height
+  // );
+  const targetScaleX = svgRect.width / provinceSize.width;
+  // const targetScaleX = svgRect.width / provinceSize.width;
+  const targetScaleY = svgRect.height / provinceSize.height;
+
+  const s = Math.min(targetScaleX, targetScaleY);
+  const ss = log(ZOOM_FACTOR, s);
+
+  console.log(
+    svgRect.width,
+    svgRect.height,
+    provinceSize.width,
+    provinceSize.height,
+    targetScaleX,
+    targetScaleY,
+    s,
+    ss
+  );
   // return;
 
-  (svg.querySelector("#map-group")! as HTMLElement).style.transition =
-    ".3s cubic-bezier(0.25, 1, 0.5, 1)";
+  // console.log(
+  //   svgRect.width,
+  //   svgRect.height,
+  //   provinceSize.width,
+  //   provinceSize.height,
+  //   targetScaleX,
+  //   targetScaleY,
+  //   log(ZOOM_FACTOR, targetScaleX),
+  //   log(ZOOM_FACTOR, targetScaleY)
+  // );
+  // const actualZoom = Math.min(
+  //   log(ZOOM_FACTOR, targetScaleX),
+  //   log(ZOOM_FACTOR, targetScaleY)
+  // );
+  // console.log(log(ZOOM_FACTOR, targetScaleX), log(ZOOM_FACTOR, targetScaleY));
 
-  (svg.querySelector("#map-group")! as HTMLElement).addEventListener(
-    "transitionend",
-    () => {
-      (svg.querySelector("#map-group")! as HTMLElement).style.transition = "";
-    }
-  );
-
-  // console.log((svgRect.width - provinceEl.getBBox().width) / 2);
-  const position = {
-    x: provinceSize.x - svgRect.x + provinceSize.width / 2,
-    y: provinceSize.y - svgRect.y + provinceSize.height / 2,
+  const endAnimationHandler = () => {
+    mapEl.style.transition = "";
+    mapEl.removeEventListener("transitionend", endAnimationHandler);
   };
+
+  const centerX = svgRect.width / 2;
+  const centerY = svgRect.height / 2;
+
+  const targetToCenterX =
+    centerX - (provinceSize.x - svgRect.x + provinceSize.width / 2);
+  const targetToCenterY =
+    centerY - (provinceSize.y - svgRect.y + provinceSize.height / 2);
+
+  movePosition({
+    x: targetToCenterX,
+    y: targetToCenterY,
+  });
+  // this.zoomScale *= scale;
+  // return;
+
+  mapEl.style.transition = ".6s cubic-bezier(0.25, 1, 0.5, 1)";
+  mapEl.addEventListener("transitionend", endAnimationHandler);
+
+  const position = {
+    // x: provinceSize.x - svgRect.x + provinceSize.width / 2,
+    // y: provinceSize.y - svgRect.y + provinceSize.height / 2,
+    x: centerX,
+    y: centerY,
+  };
+
   zoom({
     position,
-    scale: Math.pow(ZOOM_FACTOR, 20),
+    // scale: log(ZOOM_FACTOR, targetScaleX),
+    scale: s,
+    // scale: Math.pow(ZOOM_FACTOR, 20),
     // scale: 4,
     isZoomIn: true,
+    isCloseUp: true,
   });
 };
 
@@ -134,3 +195,9 @@ onUnmounted(() => {
   window.removeEventListener("mouseup", onMouseUpHandler);
 });
 </script>
+
+<style>
+#map {
+  background: linear-gradient(-30deg, #f4e8ea 0, #e3eeff 100%, #e3eeff);
+}
+</style>

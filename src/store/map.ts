@@ -11,6 +11,7 @@ interface State {
   strokeWidth: number;
   maxScale: number;
   minScale: number;
+  isDragging: boolean;
 }
 
 interface ViewBox {
@@ -24,6 +25,7 @@ interface ZoomParams {
   position: Coordinate;
   scale: number;
   isZoomIn: boolean;
+  isCloseUp?: boolean;
 }
 
 export const useMap = defineStore("map", {
@@ -34,15 +36,17 @@ export const useMap = defineStore("map", {
     position: { x: 0, y: 0 },
     strokeWidth: 1,
     maxScale: 20,
-    minScale: 0.5,
+    minScale: -5,
+    isDragging: false,
   }),
   getters: {
     mapGroupElement: (state): SVGGraphicsElement =>
       state.svg!.querySelector("#map-group") as SVGGraphicsElement,
     provinceElements: (state): (HTMLElement & SVGGraphicsElement)[] => {
       const svg = state.svg!;
-      return [...svg.querySelectorAll("path[iso_a2=ID]")] as (HTMLElement &
-        SVGGraphicsElement)[];
+      return Array.from(
+        svg.querySelectorAll("path[iso_a2=ID]")
+      ) as (HTMLElement & SVGGraphicsElement)[];
     },
   },
   actions: {
@@ -60,7 +64,7 @@ export const useMap = defineStore("map", {
       this.position.x += coordinate.x;
       this.position.y += coordinate.y;
     },
-    zoom({ position, scale, isZoomIn }: ZoomParams) {
+    zoom({ position, scale, isZoomIn, isCloseUp = false }: ZoomParams) {
       const { x, y } = position;
 
       const { x: targetX, y: targetY } = {
@@ -68,13 +72,28 @@ export const useMap = defineStore("map", {
         y: y - this.position.y,
       };
 
+      // const outOfBound =
+      //   this.zoomScale * scale > Math.pow(ZOOM_FACTOR, this.maxScale) ||
+      //   this.zoomScale * scale < Math.pow(ZOOM_FACTOR, this.minScale);
+
+      // if (outOfBound) return;
+
+      // console.log(scale);
+
+      const zoom = clamp(this.zoomScale * scale, [
+        Math.pow(ZOOM_FACTOR, this.minScale),
+        Math.pow(ZOOM_FACTOR, this.maxScale),
+      ]);
+      // // console.log(zoom);
+
       this.position.x = x - targetX * scale;
       this.position.y = y - targetY * scale;
       this.zoomScale *= scale;
+      // this.zoomScale = zoom;
 
-      this.strokeWidth = 1.5 / this.zoomScale;
+      this.strokeWidth = 1 / this.zoomScale;
 
-      // const nextScale = this.zoomScale + 0.25 * (isZoomIn ? 1 : -1);
+      // // const nextScale = this.zoomScale + 0.25 * (isZoomIn ? 1 : -1);
       // const nextScale = this.zoomScale + scale * (isZoomIn ? 1 : -1);
       // const scaleRatio = nextScale / this.zoomScale;
 
