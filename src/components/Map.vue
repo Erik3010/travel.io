@@ -4002,11 +4002,22 @@
         wikidataid="Q1866"
       />
     </g>
+    <!-- <path
+      v-if="svg"
+      v-for="province in mapStore.provinceElements"
+      :transform="`translate(${getProvinceSize(province).x} ${
+        getProvinceSize(province).y
+      })`"
+      fill-rule="evenodd"
+      d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 00-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 002.682 2.282 16.975 16.975 0 001.145.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
+      clip-rule="evenodd"
+      class="fill-gray-700"
+    /> -->
   </svg>
 </template>
 
 <style scoped>
-path:hover {
+path[iso_a2="ID"]:hover {
   fill: #2478b1;
 }
 </style>
@@ -4017,6 +4028,10 @@ import { useMap } from "@/store/map";
 
 const svg = ref<(HTMLElement & SVGSVGElement) | null>(null);
 const mapStore = useMap();
+
+const getProvinceSize = (provinceEl: HTMLElement & SVGGraphicsElement) => {
+  return provinceEl.getBoundingClientRect();
+};
 
 onMounted(() => {
   mapStore.svg = svg.value;
