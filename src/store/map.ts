@@ -43,12 +43,28 @@ export const useMap = defineStore("map", {
   }),
   getters: {
     mapGroupElement: (state): SVGGraphicsElement =>
-      state.svg!.querySelector("#map-group") as SVGGraphicsElement,
+      state.svg!.querySelector<SVGGraphicsElement>("#map-group")!,
     provinceElements: (state): (HTMLElement & SVGGraphicsElement)[] => {
       const svg = state.svg!;
       return Array.from(
         svg.querySelectorAll("path[iso_a2=ID]")
       ) as (HTMLElement & SVGGraphicsElement)[];
+    },
+    provinceProps(
+      state
+    ): (DOMRect & { el: HTMLElement & SVGGraphicsElement })[] {
+      const svg = state.svg!;
+      const { width, height } = svg.getBoundingClientRect();
+
+      return this.provinceElements.map((provinceEl) => {
+        const rect = provinceEl.getBoundingClientRect().toJSON();
+        return {
+          ...rect,
+          x: rect.x - width,
+          y: rect.y,
+          el: provinceEl,
+        };
+      });
     },
   },
   actions: {

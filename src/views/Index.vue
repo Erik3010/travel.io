@@ -7,20 +7,19 @@
       :style="{ cursor: mapStore.isDragging ? 'grabbing' : 'grab' }"
       ref="mapWrapper"
     >
-      <Map />
+      <Map @init-map="initMap" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import Map from "@/components/Map.vue";
+import Map from "@/components/Map/Map.vue";
 import Sidebar from "@/components/Sidebar/Index.vue";
 import { ref, onMounted, onUnmounted } from "vue";
 import { Coordinate } from "@/types/Coordinate";
 import { useMap } from "@/store/map";
 import { ZOOM_FACTOR } from "@/constants";
 import { roundNumber, log } from "@/utils";
-import { storeToRefs } from "pinia";
 
 const mapWrapper = ref<HTMLElement | null>(null);
 
@@ -126,7 +125,7 @@ const provinceClickHandler = (
   });
 };
 
-onMounted(() => {
+const initMap = () => {
   const svg = mapStore.svg!;
 
   const { width, height } = mapWrapper.value!.getBoundingClientRect();
@@ -145,6 +144,23 @@ onMounted(() => {
       provinceClickHandler.bind(null, province)
     );
   }
+};
+
+onMounted(() => {
+  // const svg = mapStore.svg!;
+  // const { width, height } = mapWrapper.value!.getBoundingClientRect();
+  // setSVGIntialSize(width, height);
+  // centerizedMap();
+  // svg.addEventListener("mousedown", onMouseDownHandler);
+  // svg.addEventListener("mousemove", onMouseMoveHandler);
+  // svg.addEventListener("wheel", onWheelHandler);
+  // window.addEventListener("mouseup", onMouseUpHandler);
+  // for (const province of mapStore.provinceElements) {
+  //   province.addEventListener(
+  //     "click",
+  //     provinceClickHandler.bind(null, province)
+  //   );
+  // }
 });
 
 onUnmounted(() => {
