@@ -4007,7 +4007,7 @@
 
 <style scoped>
 path:hover {
-  fill: red;
+  fill: #2478b1;
 }
 </style>
 
