@@ -82,47 +82,6 @@ const provinceClickHandler = (
   const provinceSize = provinceEl.getBoundingClientRect();
   const mapEl = mapStore.mapGroupElement;
 
-  // console.log(
-  //   svgRect.width,
-  //   svgRect.height,
-  //   provinceSize.width,
-  //   provinceSize.height
-  // );
-  const targetScaleX = svgRect.width / provinceSize.width;
-  // const targetScaleX = svgRect.width / provinceSize.width;
-  const targetScaleY = svgRect.height / provinceSize.height;
-
-  const s = Math.min(targetScaleX, targetScaleY);
-  const ss = log(ZOOM_FACTOR, s);
-
-  console.log(
-    svgRect.width,
-    svgRect.height,
-    provinceSize.width,
-    provinceSize.height,
-    targetScaleX,
-    targetScaleY,
-    s,
-    ss
-  );
-  // return;
-
-  // console.log(
-  //   svgRect.width,
-  //   svgRect.height,
-  //   provinceSize.width,
-  //   provinceSize.height,
-  //   targetScaleX,
-  //   targetScaleY,
-  //   log(ZOOM_FACTOR, targetScaleX),
-  //   log(ZOOM_FACTOR, targetScaleY)
-  // );
-  // const actualZoom = Math.min(
-  //   log(ZOOM_FACTOR, targetScaleX),
-  //   log(ZOOM_FACTOR, targetScaleY)
-  // );
-  // console.log(log(ZOOM_FACTOR, targetScaleX), log(ZOOM_FACTOR, targetScaleY));
-
   const endAnimationHandler = () => {
     mapEl.style.transition = "";
     mapEl.removeEventListener("transitionend", endAnimationHandler);
@@ -140,10 +99,8 @@ const provinceClickHandler = (
     x: targetToCenterX,
     y: targetToCenterY,
   });
-  // this.zoomScale *= scale;
-  // return;
 
-  mapEl.style.transition = ".6s cubic-bezier(0.25, 1, 0.5, 1)";
+  mapEl.style.transition = ".6s cubic-bezier(0.785, 0.135, 0.15, 0.86)";
   mapEl.addEventListener("transitionend", endAnimationHandler);
 
   const position = {
@@ -153,13 +110,18 @@ const provinceClickHandler = (
     y: centerY,
   };
 
+  const scale = Math.min(
+    (svgRect.width - 200) / provinceSize.width,
+    (svgRect.height - 100) / provinceSize.height
+  );
+
   zoom({
     position,
-    // scale: log(ZOOM_FACTOR, targetScaleX),
-    scale: s,
+    scale,
     // scale: Math.pow(ZOOM_FACTOR, 20),
     // scale: 4,
-    isZoomIn: true,
+    // isZoomIn: true,
+    isZoomIn: mapStore.zoomScale < mapStore.zoomScale * scale,
     isCloseUp: true,
   });
 };

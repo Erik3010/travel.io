@@ -1,7 +1,7 @@
 import { ZOOM_FACTOR } from "@/constants";
 import { Coordinate } from "@/types/Coordinate";
 import { defineStore } from "pinia";
-import { clamp } from "@/utils";
+import { clamp, log } from "@/utils";
 
 interface State {
   svg: (HTMLElement & SVGSVGElement) | null;
@@ -12,6 +12,7 @@ interface State {
   maxScale: number;
   minScale: number;
   isDragging: boolean;
+  isOutOfBound: boolean;
 }
 
 interface ViewBox {
@@ -35,9 +36,10 @@ export const useMap = defineStore("map", {
     viewBox: { x: 0, y: 0, width: 0, height: 0 },
     position: { x: 0, y: 0 },
     strokeWidth: 1,
-    maxScale: 20,
-    minScale: -5,
+    maxScale: 10,
+    minScale: 0.5,
     isDragging: false,
+    isOutOfBound: false,
   }),
   getters: {
     mapGroupElement: (state): SVGGraphicsElement =>
@@ -72,24 +74,40 @@ export const useMap = defineStore("map", {
         y: y - this.position.y,
       };
 
-      // const outOfBound =
-      //   this.zoomScale * scale > Math.pow(ZOOM_FACTOR, this.maxScale) ||
-      //   this.zoomScale * scale < Math.pow(ZOOM_FACTOR, this.minScale);
+      if (
+        (this.zoomScale * scale >= this.maxScale && isZoomIn) ||
+        (this.zoomScale * scale <= this.minScale && !isZoomIn)
+      ) {
+        this.isOutOfBound = !isCloseUp;
 
-      // if (outOfBound) return;
+        if (!this.isOutOfBound) {
+          this.isOutOfBound = true;
 
-      // console.log(scale);
+          const calculateScale = isCloseUp
+            ? isZoomIn
+              ? this.maxScale / this.zoomScale
+              : this.minScale
+            : scale;
 
-      const zoom = clamp(this.zoomScale * scale, [
-        Math.pow(ZOOM_FACTOR, this.minScale),
-        Math.pow(ZOOM_FACTOR, this.maxScale),
-      ]);
-      // // console.log(zoom);
+          this.position.x = x - targetX * calculateScale;
+          this.position.y = y - targetY * calculateScale;
+          this.zoomScale *= calculateScale;
+        } else {
+          this.position.x = x - targetX;
+          this.position.y = y - targetY;
+        }
+      } else {
+        this.isOutOfBound = false;
 
-      this.position.x = x - targetX * scale;
-      this.position.y = y - targetY * scale;
-      this.zoomScale *= scale;
-      // this.zoomScale = zoom;
+        this.position.x = x - targetX * scale;
+        this.position.y = y - targetY * scale;
+        this.zoomScale *= scale;
+      }
+
+      // ----------
+      // this.position.x = x - targetX * scale;
+      // this.position.y = y - targetY * scale;
+      // this.zoomScale *= scale;
 
       this.strokeWidth = 1 / this.zoomScale;
 
