@@ -9,27 +9,32 @@
     <g
       id="map-group"
       ref="mapGroup"
-      :stroke-width="mapStore.strokeWidth"
-      :transform="`translate(${mapStore.position.x} ${mapStore.position.y}) scale(${mapStore.zoomScale})`"
-    />
-
-    <Pin />
+      :stroke-width="strokeWidth"
+      :transform="transform"
+    >
+      <Pin
+        v-if="mapStore.svg"
+        v-for="province in mapStore.getAllGroupedIsland"
+        :rect="province.primaryIsland.props"
+      />
+    </g>
   </svg>
 </template>
 
 <style>
-path[iso_a2="ID"]:hover {
+path[iso_a2="ID"].hover {
   fill: #2478b1;
 }
 </style>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useMap } from "@/store/map";
 import Pin from "@/components/Map/Pin.vue";
+import { generateCSSTransform } from "@/utils";
 
 const emit = defineEmits<{
-  (e: "initMap"): void;
+  (event: "initMap"): void;
 }>();
 
 const svg = ref<(HTMLElement & SVGSVGElement) | null>(null);
@@ -37,13 +42,21 @@ const mapGroup = ref<HTMLElement | null>(null);
 
 const mapStore = useMap();
 
+const strokeWidth = computed(() => 1 / mapStore.zoomScale);
+const transform = computed(() =>
+  generateCSSTransform(
+    { x: mapStore.position.x, y: mapStore.position.y },
+    mapStore.zoomScale
+  )
+);
+
 onMounted(async () => {
   const svgString = await (await fetch("src/assets/ID.svg")).text();
 
   const parser = new DOMParser().parseFromString(svgString, "image/svg+xml");
   const paths = [...parser.querySelectorAll("svg > path")];
 
-  for (const path of paths) mapGroup.value!.appendChild(path);
+  for (const path of paths) mapGroup.value!.prepend(path);
 
   mapStore.svg = svg.value;
   emit("initMap");
