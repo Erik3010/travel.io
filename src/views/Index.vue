@@ -114,9 +114,7 @@ const provinceClickHandler = (provinceEl: HtmlSvg, event: MouseEvent) => {
   zoom({
     position,
     scale,
-    // scale: Math.pow(ZOOM_FACTOR, 20),
     // scale: 4,
-    // isZoomIn: true,
     isZoomIn: mapStore.zoomScale < mapStore.zoomScale * scale,
     isCloseUp: true,
   });
