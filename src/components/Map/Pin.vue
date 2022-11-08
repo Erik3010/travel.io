@@ -1,6 +1,7 @@
 <template>
   <path
     :transform="transform"
+    ref="pinEl"
     class="fill-gray-700 transition-transform duration-[0.6s] pointer-events-none"
     fill-rule="evenodd"
     stroke="none"
@@ -14,15 +15,35 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useMap } from "@/store/map";
 import { generateCSSTransform } from "@/utils";
+import { HtmlSvg } from "@/types/common";
+import { Coordinate } from "@/types/Coordinate";
 
 const props = defineProps<{ rect: DOMRect }>();
 const mapStore = useMap();
 
+const pinEl = ref<HtmlSvg | null>(null);
+
+const position = ref<Coordinate>({ x: 0, y: 0 });
+
 const scale = computed(() => 1 / mapStore.zoomScale);
 const transform = computed(() =>
-  generateCSSTransform({ x: props.rect.x, y: props.rect.y }, scale.value)
+  generateCSSTransform(
+    // { x: position.value.x, y: position.value.y },
+    { x: props.rect.x, y: props.rect.y },
+    scale.value
+  )
 );
+
+// onMounted(() => {
+//   const { width, height } = pinEl.value!.getBoundingClientRect();
+//   console.log(width, height);
+
+//   position.value.x =
+//     props.rect.x + props.rect.width / 2 - (scale.value * width) / 2;
+//   position.value.y =
+//     props.rect.y + props.rect.height / 2 - (scale.value * height) / 2;
+// });
 </script>

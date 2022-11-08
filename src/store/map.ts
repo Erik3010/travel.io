@@ -68,6 +68,19 @@ export const useMap = defineStore("map", {
         ];
       };
     },
+    getProvincePrimaryIsland: () => {
+      return (provinceEls: HtmlSvg[]) => {
+        return provinceEls.reduce<HtmlSvg | null>((prevIsland, island) => {
+          if (prevIsland === null) return island;
+
+          const { width: prevWidth, height: prevHeight } =
+            prevIsland.getBoundingClientRect();
+          const { width, height } = island.getBoundingClientRect();
+
+          return prevWidth * prevHeight < width * height ? island : prevIsland;
+        }, null);
+      };
+    },
     getAllGroupedIsland() {
       const provinces: Province[] = [];
 
@@ -78,20 +91,7 @@ export const useMap = defineStore("map", {
           continue;
 
         const provinceIslands = this.groupIslandByProvince(provinceEl);
-
-        const primaryIsland = provinceIslands.reduce<HtmlSvg | null>(
-          (prev, island) => {
-            if (prev === null) return island;
-
-            const { width: prevWidth, height: prevHeight } =
-              prev.getBoundingClientRect();
-            const { width, height } = island.getBoundingClientRect();
-
-            return prevWidth * prevHeight < width * height ? island : prev;
-          },
-          null
-        );
-
+        const primaryIsland = this.getProvincePrimaryIsland(provinceIslands);
         const rect = primaryIsland!.getBBox();
 
         const province: Province = {
@@ -99,6 +99,7 @@ export const useMap = defineStore("map", {
           islandEls: provinceIslands,
           primaryIsland: {
             element: primaryIsland,
+            // props: rect,
             props: {
               ...rect,
               x:
