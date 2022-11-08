@@ -54,7 +54,7 @@ onMounted(async () => {
   const svgString = await (await fetch("src/assets/ID.svg")).text();
 
   const parser = new DOMParser().parseFromString(svgString, "image/svg+xml");
-  const paths = [...parser.querySelectorAll("svg > path")];
+  const paths = Array.from(parser.querySelectorAll("svg > path"));
 
   for (const path of paths) mapGroup.value!.prepend(path);
 

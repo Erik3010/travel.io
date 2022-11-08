@@ -1,10 +1,12 @@
 import { ZOOM_FACTOR, MAP_PIN_SIZE } from "@/constants";
-import { Coordinate } from "@/types/Coordinate";
-import { HtmlSvg } from "@/types/common";
 import { defineStore } from "pinia";
-import { Province } from "@/types/Province";
 
-interface State {
+import { HtmlSvg } from "@/types/common";
+import { Coordinate } from "@/types/Coordinate";
+import { Province } from "@/types/Province";
+import { ViewBox } from "@/types/ViewBox";
+
+interface MapState {
   svg: (HTMLElement & SVGSVGElement) | null;
   zoomScale: number;
   viewBox: ViewBox;
@@ -15,13 +17,6 @@ interface State {
   isOutOfBound: boolean;
 }
 
-interface ViewBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface ZoomParams {
   position: Coordinate;
   scale: number;
@@ -30,7 +25,7 @@ interface ZoomParams {
 }
 
 export const useMap = defineStore("map", {
-  state: (): State => ({
+  state: (): MapState => ({
     svg: null,
     zoomScale: 1,
     viewBox: { x: 0, y: 0, width: 0, height: 0 },
@@ -45,16 +40,16 @@ export const useMap = defineStore("map", {
       state.svg!.querySelector<HtmlSvg>("#map-group")!,
     provinceElements: (state): HtmlSvg[] => {
       const svg = state.svg!;
-      return Array.from(svg.querySelectorAll("path[iso_a2=ID]")) as HtmlSvg[];
+      return Array.from(svg.querySelectorAll<HtmlSvg>("path[iso_a2=ID]"));
     },
     groupIslandByProvince: () => {
       return (provinceEl: HtmlSvg) => {
         const provinceCodeName = provinceEl.getAttribute("iso_3166_2");
-        return [
-          ...document.querySelectorAll<HtmlSvg>(
+        return Array.from(
+          document.querySelectorAll<HtmlSvg>(
             `path[iso_3166_2=${provinceCodeName}]`
-          ),
-        ];
+          )
+        );
       };
     },
     getProvincePrimaryIsland: () => {
@@ -126,10 +121,24 @@ export const useMap = defineStore("map", {
       this.position.x += coordinate.x;
       this.position.y += coordinate.y;
     },
+    setScale({
+      position,
+      target,
+      scale,
+    }: {
+      position: Coordinate;
+      target: Coordinate;
+      scale: number;
+    }) {
+      this.position.x = position.x - target.x * scale;
+      this.position.y = position.y - target.y * scale;
+
+      this.zoomScale *= scale;
+    },
     zoom({ position, scale, isZoomIn, isCloseUp = false }: ZoomParams) {
       const { x, y } = position;
 
-      const { x: targetX, y: targetY } = {
+      const target = {
         x: x - this.position.x,
         y: y - this.position.y,
       };
@@ -149,27 +158,19 @@ export const useMap = defineStore("map", {
               : this.minScale
             : scale;
 
-          this.position.x = x - targetX * calculateScale;
-          this.position.y = y - targetY * calculateScale;
-          this.zoomScale *= calculateScale;
+          this.setScale({ position, target, scale: calculateScale });
         } else {
-          this.position.x = x - targetX;
-          this.position.y = y - targetY;
+          this.setScale({ position, target, scale: 1 });
         }
       } else {
         this.isOutOfBound = false;
-
-        this.position.x = x - targetX * scale;
-        this.position.y = y - targetY * scale;
-        this.zoomScale *= scale;
+        this.setScale({ position, target, scale });
       }
 
       // ----------
       // this.position.x = x - targetX * scale;
       // this.position.y = y - targetY * scale;
       // this.zoomScale *= scale;
-
-      // this.strokeWidth = 1 / this.zoomScale;
 
       // // const nextScale = this.zoomScale + 0.25 * (isZoomIn ? 1 : -1);
       // const nextScale = this.zoomScale + scale * (isZoomIn ? 1 : -1);
