@@ -47,17 +47,6 @@ export const useMap = defineStore("map", {
       const svg = state.svg!;
       return Array.from(svg.querySelectorAll("path[iso_a2=ID]")) as HtmlSvg[];
     },
-    provinceProps(state): (DOMRect & { el: HtmlSvg })[] {
-      return this.provinceElements.map((provinceEl) => {
-        const rect = provinceEl.getBBox();
-        return {
-          ...rect,
-          x: rect.x + rect.width / 2 - ((1 / this.zoomScale) * 16.5) / 2,
-          y: rect.y + rect.height / 2 - ((1 / this.zoomScale) * 20) / 2,
-          el: provinceEl,
-        };
-      });
-    },
     groupIslandByProvince: () => {
       return (provinceEl: HtmlSvg) => {
         const provinceCodeName = provinceEl.getAttribute("iso_3166_2");
@@ -86,8 +75,9 @@ export const useMap = defineStore("map", {
 
       for (const provinceEl of this.provinceElements) {
         const provinceCode = provinceEl.getAttribute("iso_3166_2")!;
+        const provinceName = provinceEl.getAttribute("name")!;
 
-        if (provinces.find((province) => province.name === provinceCode))
+        if (provinces.find((province) => province.id === provinceCode))
           continue;
 
         const provinceIslands = this.groupIslandByProvince(provinceEl);
@@ -95,7 +85,8 @@ export const useMap = defineStore("map", {
         const rect = primaryIsland!.getBBox();
 
         const province: Province = {
-          name: provinceCode,
+          id: provinceCode,
+          name: provinceName,
           islandEls: provinceIslands,
           primaryIsland: {
             element: primaryIsland,
