@@ -1,5 +1,8 @@
 <template>
-  <div id="card" class="flex bg-white rounded-sm overflow-hidden">
+  <div
+    id="card"
+    class="flex bg-white rounded-sm overflow-hidden cursor-pointer hover:bg-gray-100"
+  >
     <div class="w-full p-4">
       <div class="bg-primary-base rounded-full p-1 inline-block">
         <GlobeIcon />
