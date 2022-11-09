@@ -97,6 +97,7 @@ const provinceClickHandler = (provinceEl: HtmlSvg, event: MouseEvent) => {
   });
 
   mapEl.style.transition = ".6s cubic-bezier(0.785, 0.135, 0.15, 0.86)";
+  // mapEl.style.transition = ".6s cubic-bezier(0.75, 0.5, 0, 1.75)";
   mapEl.addEventListener("transitionend", endAnimationHandler);
 
   const position = {
