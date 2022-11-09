@@ -85,18 +85,7 @@ export const useMap = defineStore("map", {
           islandEls: provinceIslands,
           primaryIsland: {
             element: primaryIsland,
-            // props: rect,
-            props: {
-              ...rect,
-              x:
-                rect.x +
-                rect.width / 2 -
-                ((1 / this.zoomScale) * MAP_PIN_SIZE.width) / 2,
-              y:
-                rect.y +
-                rect.height / 2 -
-                ((1 / this.zoomScale) * MAP_PIN_SIZE.height) / 2,
-            },
+            props: rect,
           },
         };
 

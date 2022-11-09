@@ -15,35 +15,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useMap } from "@/store/map";
 import { generateCSSTransform } from "@/utils";
 import { HtmlSvg } from "@/types/common";
-import { Coordinate } from "@/types/Coordinate";
+import { Province } from "@/types/Province";
 
-const props = defineProps<{ rect: DOMRect }>();
+const props = defineProps<{ province: Province }>();
 const mapStore = useMap();
 
 const pinEl = ref<HtmlSvg | null>(null);
 
-const position = ref<Coordinate>({ x: 0, y: 0 });
+const { x, y, width, height } = props.province.primaryIsland.props;
 
 const scale = computed(() => 1 / mapStore.zoomScale);
-const transform = computed(() =>
-  generateCSSTransform(
-    // { x: position.value.x, y: position.value.y },
-    { x: props.rect.x, y: props.rect.y },
+const transform = computed(() => {
+  const rect = pinEl.value?.getBoundingClientRect() ?? null;
+  const pinSize = {
+    width: rect?.width ?? 0,
+    height: rect?.height ?? 0,
+  };
+
+  return generateCSSTransform(
+    {
+      x: x + width / 2 - (scale.value * pinSize.width) / 2,
+      y: y + height / 2 - (scale.value * pinSize.height) / 2,
+    },
     scale.value
-  )
-);
-
-// onMounted(() => {
-//   const { width, height } = pinEl.value!.getBoundingClientRect();
-//   console.log(width, height);
-
-//   position.value.x =
-//     props.rect.x + props.rect.width / 2 - (scale.value * width) / 2;
-//   position.value.y =
-//     props.rect.y + props.rect.height / 2 - (scale.value * height) / 2;
-// });
+  );
+});
 </script>

@@ -15,7 +15,7 @@
       <Pin
         v-if="mapStore.svg"
         v-for="province in mapStore.getAllGroupedIsland"
-        :rect="province.primaryIsland.props"
+        :province="province"
       />
     </g>
   </svg>
